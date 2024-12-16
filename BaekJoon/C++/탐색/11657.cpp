@@ -1,17 +1,18 @@
-癤�#include <iostream>
+#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <queue>
 using namespace std;
-typedef long num;
-
-num lm = 21000000000;
+typedef long long num;
 typedef tuple<num, num, num> edge;
+
 vector<num> distances;
 vector<edge> edges;
+num lm = 999999999999;
+
 num N, M;
 
-void bellman_ford(num start);
+bool bellman_ford(num start);
 
 int main()
 {
@@ -19,51 +20,57 @@ int main()
 	cout.tie(0);
 	cin.tie(0);
 	cin >> N >> M;
-	distances.resize(N + 1);
-	fill(distances.begin(), distances.end(), lm);
+	distances.resize(N + 1, lm);
 
+	num a, b, c;
 	for (num i = 0; i < M; i++) {
-		num s, e, t;
-		cin >> s >> e >> t;
-		edges.push_back(edge(s, e, t));
+		cin >> a >> b >> c;
+		edges.push_back(edge(a, b, c));
 	}
+	bool hasCycle = bellman_ford(1);
 
-	bellman_ford(1);
-}
-
-void bellman_ford(num start) {
-	distances[start] = 0;
-	for (num i = 1; i < N; i++) {
-		for (num j = 0; j < M; j++) {
-			edge medge = edges[j];
-			num s = get<0>(medge);
-			num e = get<1>(medge);
-			num t = get<2>(medge);
-			if (distances[s] != lm && distances[e] > distances[s] + t) {
-				distances[e] = distances[s] + t;
-			}
-		}
+	if (hasCycle) {
+		cout << -1;
 	}
-	bool mCycle = false;
-	for (num i = 0; i < M; i++) {
-		edge medge = edges[i];
-		num s = get<0>(medge);
-		num e = get<1>(medge);
-		num t = get<2>(medge);
-		if (distances[s] != lm && distances[e] > distances[s] + t) {
-			mCycle = true;
-		}
-	}
-	if (!mCycle) {
-		for (num i = 1; i <= N; i++) {
-			if (i == start) continue;
+	else {
+		for (num i = 2; i <= N; i++) {
 			if (distances[i] == lm)
 				cout << -1 << "\n";
 			else
 				cout << distances[i] << "\n";
 		}
 	}
-	else {
-		cout << -1 << "\n";
+
+}
+
+bool bellman_ford(num start) {
+	distances[start] = 0;
+	for (num i = 0; i < N - 1; i++) {
+		for (num j = 0; j < M; j++) {
+			edge medge = edges[j];
+			num s = get<0>(medge);
+			num e = get<1>(medge);
+			num t = get<2>(medge);
+			// start에서 s까지 가는 경로가 탐색 되었고,
+			// e까지 더 짧은 경로를 찾으면 갱신
+			if (distances[s] != lm && distances[e] > distances[s] + t) {
+				distances[e] = distances[s] + t;
+			}
+		}
 	}
+	bool hasCycle = false;
+	for (num i = 0; i < M; i++) {
+		edge medge = edges[i];
+		num s = get<0>(medge);
+		num e = get<1>(medge);
+		num t = get<2>(medge);
+		// start에서 s까지 가는 경로가 탐색 되었고,
+		// e까지 가는 더 짧은 경로를 찾는 경우, 음수 사이클이 존재하는 것임.
+		// 음수 사이클이 없다면, 이미 모두 갱신되었을것임.
+		// 즉, 더 짧은 경로가 발견 된다는 것은 음수 사이클이 존재한다는 것임.
+		if (distances[s] != lm && distances[e] > distances[s] + t) {
+			hasCycle = true;
+		}
+	}
+	return hasCycle;
 }
